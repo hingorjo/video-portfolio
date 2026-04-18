@@ -28,11 +28,16 @@ const getThumb = url => {
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
 const DEF_PROFILE = {
-  name: "Alex Rivera", title: "Video Editor & Colorist",
+  name: "Abdul Ghaffar", title: "Video Editor & Colorist",
   tagline: "Crafting Cinematic\nStories Frame\nBy Frame.",
-  bio: "7+ years of post-production expertise delivering world-class edits for global brands, independent filmmakers, and digital creators. Every cut is deliberate. Every color tells a story.",
-  email: "hello@alexrivera.com", instagram: "@alexrivera", available: true,
-  stats: [{ value:"7+", label:"Years Exp." },{ value:"120+", label:"Projects" },{ value:"45+", label:"Clients" },{ value:"12", label:"Awards" }]
+  bio: "2+ years of post-production expertise delivering world-class edits for global brands, independent filmmakers, and digital creators. Every cut is deliberate. Every color tells a story.",
+  email: "hingorjoabdulghaffar@gmail.com",
+  instagram: "https://www.instagram.com/userdead_1214?igsh=MWRmbWNocjVobHJ3bw==",
+  instagramHandle: "@userdead_1214",
+  tiktok: "https://www.tiktok.com/@informative.knowledge121?_r=1&_t=ZS-95dZ1hb2sy8",
+  tiktokHandle: "@informative.knowledge121",
+  available: true,
+  stats: [{ value:"2+", label:"Years Exp." },{ value:"10+", label:"Projects" },{ value:"10+", label:"Clients" },{ value:"100%", label:"Satisfaction" }]
 };
 const DEF_PROJECTS = [
   { id:1, title:"Nike — Just Run", category:"Commercial", videoUrl:"", desc:"Brand film for Nike's Asia-Pacific campaign. Shot across 4 cities." },
@@ -642,13 +647,26 @@ function ContactSection({ profile }) {
         <div className="reveal">
           <a href={`mailto:${profile.email}`} className="cta-btn" style={{background:C.accent,color:'#000',padding:'18px 56px',borderRadius:4,textDecoration:'none',fontWeight:500,fontSize:14,letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans'}}>{profile.email}</a>
         </div>
-        {profile.instagram && (
-          <div className="reveal" style={{marginTop:32}}>
-            <a href="#" style={{color:C.textMuted,fontSize:13,letterSpacing:'0.06em',textDecoration:'none',fontFamily:'DM Sans',transition:'color 0.2s,letter-spacing 0.3s'}}
-              onMouseEnter={e=>{e.currentTarget.style.color=C.accent;e.currentTarget.style.letterSpacing='0.1em';}}
-              onMouseLeave={e=>{e.currentTarget.style.color=C.textMuted;e.currentTarget.style.letterSpacing='0.06em';}}>Instagram: {profile.instagram}</a>
-          </div>
-        )}
+        <div className="reveal" style={{marginTop:40,display:'flex',justifyContent:'center',gap:32,flexWrap:'wrap'}}>
+          {profile.instagram && (
+            <a href={profile.instagram} target="_blank" rel="noopener noreferrer"
+              style={{display:'inline-flex',alignItems:'center',gap:8,color:C.textMuted,fontSize:13,letterSpacing:'0.06em',textDecoration:'none',fontFamily:'DM Sans',padding:'10px 22px',border:`1px solid ${C.border}`,borderRadius:100,transition:'all 0.25s'}}
+              onMouseEnter={e=>{e.currentTarget.style.color=C.accent;e.currentTarget.style.borderColor='rgba(245,166,35,0.45)';e.currentTarget.style.background=C.accentDim;e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.color=C.textMuted;e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background='transparent';e.currentTarget.style.transform='translateY(0)';}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              {profile.instagramHandle}
+            </a>
+          )}
+          {profile.tiktok && (
+            <a href={profile.tiktok} target="_blank" rel="noopener noreferrer"
+              style={{display:'inline-flex',alignItems:'center',gap:8,color:C.textMuted,fontSize:13,letterSpacing:'0.06em',textDecoration:'none',fontFamily:'DM Sans',padding:'10px 22px',border:`1px solid ${C.border}`,borderRadius:100,transition:'all 0.25s'}}
+              onMouseEnter={e=>{e.currentTarget.style.color=C.accent;e.currentTarget.style.borderColor='rgba(245,166,35,0.45)';e.currentTarget.style.background=C.accentDim;e.currentTarget.style.transform='translateY(-2px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.color=C.textMuted;e.currentTarget.style.borderColor=C.border;e.currentTarget.style.background='transparent';e.currentTarget.style.transform='translateY(0)';}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.79 1.54V6.78a4.85 4.85 0 0 1-1.02-.09z"/></svg>
+              {profile.tiktokHandle}
+            </a>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -699,26 +717,25 @@ function LBL({ children }) {
 }
 
 function AdminPanel({ open, onClose, profile, projects, services, onSave }) {
-  const [tab,setTab]=useState('profile');
-  const [p,setP]=useState(profile);
+  const [tab,setTab]=useState('projects');
   const [projs,setProjs]=useState(projects);
   const [srvs,setSrvs]=useState(services);
   const [newProj,setNewProj]=useState({title:'',category:'Commercial',videoUrl:'',desc:''});
-  useEffect(()=>{ if(open){setP(profile);setProjs(projects);setSrvs(services);} },[open,profile,projects,services]);
+  useEffect(()=>{ if(open){setProjs(projects);setSrvs(services);} },[open,projects,services]);
   if(!open) return null;
-  const save=()=>{ onSave({profile:p,projects:projs,services:srvs}); onClose(); };
+  const save=()=>{ onSave({profile,projects:projs,services:srvs}); onClose(); };
   const addProj=()=>{ if(!newProj.title.trim())return; setProjs(prev=>[...prev,{...newProj,id:Date.now()}]); setNewProj({title:'',category:'Commercial',videoUrl:'',desc:''}); };
   const delProj=id=>setProjs(prev=>prev.filter(x=>x.id!==id));
   const editProj=(id,k,v)=>setProjs(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
   const editSrv=(id,k,v)=>setSrvs(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
-  const tabs=[['profile','Profile'],['projects','Projects'],['services','Services']];
+  const tabs=[['projects','Projects'],['services','Services']];
   const CATS=['Commercial','Short Film','Music Video','Documentary','Fashion','Wedding','Corporate','Travel','Social Media','Other'];
   return (
     <div style={{position:'fixed',inset:0,zIndex:200,background:'rgba(0,0,0,0.85)',display:'flex',justifyContent:'flex-end',animation:'fadeIn 0.25s ease'}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:560,height:'100%',background:C.surface,borderLeft:`1px solid ${C.border}`,display:'flex',flexDirection:'column',animation:'slidePanel 0.38s cubic-bezier(0.16,1,0.3,1)'}}>
         <style>{`@keyframes slidePanel{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
         <div style={{padding:'22px 28px',borderBottom:`1px solid ${C.border}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div><h2 className="dp" style={{fontSize:26,color:C.text}}>Edit Portfolio</h2><p style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:'DM Sans'}}>Manage content & profile</p></div>
+          <div><h2 className="dp" style={{fontSize:26,color:C.text}}>Edit Portfolio</h2><p style={{fontSize:12,color:C.textMuted,marginTop:2,fontFamily:'DM Sans'}}>Manage projects & services</p></div>
           <button onClick={onClose} style={{background:'none',border:`1px solid ${C.border}`,color:C.textMuted,width:36,height:36,borderRadius:'50%',fontSize:20,display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.25s'}}
             onMouseEnter={e=>{e.currentTarget.style.background=C.surface3;e.currentTarget.style.transform='rotate(90deg)';}}
             onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.transform='rotate(0deg)';}}>×</button>
@@ -729,29 +746,6 @@ function AdminPanel({ open, onClose, profile, projects, services, onSave }) {
           ))}
         </div>
         <div style={{flex:1,overflow:'auto',padding:28}}>
-          {tab==='profile' && (
-            <div style={{display:'flex',flexDirection:'column',gap:18}}>
-              <div><LBL>Full Name</LBL><input value={p.name} onChange={e=>setP({...p,name:e.target.value})}/></div>
-              <div><LBL>Title</LBL><input value={p.title} onChange={e=>setP({...p,title:e.target.value})}/></div>
-              <div><LBL>Hero Tagline (use \n for line breaks)</LBL><input value={p.tagline} onChange={e=>setP({...p,tagline:e.target.value})}/></div>
-              <div><LBL>Bio</LBL><textarea value={p.bio} onChange={e=>setP({...p,bio:e.target.value})}/></div>
-              <div><LBL>Email</LBL><input value={p.email} onChange={e=>setP({...p,email:e.target.value})}/></div>
-              <div><LBL>Instagram</LBL><input value={p.instagram} onChange={e=>setP({...p,instagram:e.target.value})}/></div>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <input type="checkbox" id="av" checked={p.available} onChange={e=>setP({...p,available:e.target.checked})} style={{width:'auto'}}/>
-                <label htmlFor="av" style={{color:C.textMuted,fontSize:14,fontFamily:'DM Sans'}}>Show "Available" badge</label>
-              </div>
-              <div style={{borderTop:`1px solid ${C.border}`,paddingTop:18}}>
-                <LBL>Hero Stats</LBL>
-                {p.stats.map((s,i)=>(
-                  <div key={i} style={{display:'flex',gap:10,marginBottom:10}}>
-                    <input value={s.value} onChange={e=>setP({...p,stats:p.stats.map((x,j)=>j===i?{...x,value:e.target.value}:x)})} placeholder="Value" style={{flex:1}}/>
-                    <input value={s.label} onChange={e=>setP({...p,stats:p.stats.map((x,j)=>j===i?{...x,label:e.target.value}:x)})} placeholder="Label" style={{flex:2}}/>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
           {tab==='projects' && (
             <div>
               <div style={{background:C.surface2,border:`1px solid ${C.border}`,borderRadius:8,padding:20,marginBottom:24}}>
@@ -826,14 +820,14 @@ export default function App() {
 
   useEffect(()=>{
     (async()=>{
-      const [p,pr,sv]=await Promise.all([db.get('ve_profile',DEF_PROFILE),db.get('ve_projects',DEF_PROJECTS),db.get('ve_services',DEF_SERVICES)]);
-      setProfile(p); setProjects(pr); setServices(sv);
+      const [pr,sv]=await Promise.all([db.get('ve_projects',DEF_PROJECTS),db.get('ve_services',DEF_SERVICES)]);
+      setProfile(DEF_PROFILE); setProjects(pr); setServices(sv);
     })();
   },[]);
 
-  const handleSave=async({profile:p,projects:pr,services:sv})=>{
-    setProfile(p); setProjects(pr); setServices(sv);
-    await db.set('ve_profile',p); await db.set('ve_projects',pr); await db.set('ve_services',sv);
+  const handleSave=async({profile:_p,projects:pr,services:sv})=>{
+    setProjects(pr); setServices(sv);
+    await db.set('ve_projects',pr); await db.set('ve_services',sv);
   };
 
   return (
@@ -857,7 +851,7 @@ export default function App() {
       </footer>
       <VideoModal project={activeVideo} onClose={()=>setActiveVideo(null)}/>
       <PasswordGate open={gateOpen} onClose={()=>setGateOpen(false)} onSuccess={()=>setAdminOpen(true)}/>
-      <AdminPanel open={adminOpen} onClose={()=>setAdminOpen(false)} profile={profile} projects={projects} services={services} onSave={handleSave}/>
+      <AdminPanel open={adminOpen} onClose={()=>setAdminOpen(false)} profile={DEF_PROFILE} projects={projects} services={services} onSave={handleSave}/>
     </div>
   );
 }
