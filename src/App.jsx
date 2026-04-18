@@ -111,6 +111,18 @@ const GlobalStyle = () => (
     input:focus,textarea:focus{border-color:${C.accent};box-shadow:0 0 0 3px rgba(245,166,35,0.1)}
     textarea{resize:vertical;min-height:80px}
     select{background:${C.surface2};border:1px solid ${C.border};color:${C.text};padding:10px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%}
+    @keyframes sidebarIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    @keyframes sidebarOut{from{transform:translateX(0)}to{transform:translateX(100%)}}
+    .nav-desktop{display:flex;gap:clamp(16px,3vw,36px);align-items:center}
+    .nav-hamburger{display:none;background:none;border:none;padding:6px;flex-direction:column;gap:5px;justify-content:center;align-items:center;z-index:101}
+    .nav-hamburger span{display:block;width:22px;height:2px;background:${C.text};border-radius:2px;transition:transform 0.35s cubic-bezier(0.16,1,0.3,1),opacity 0.25s,width 0.3s}
+    .nav-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .nav-hamburger.open span:nth-child(2){opacity:0;width:0}
+    .nav-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    @media(max-width:768px){
+      .nav-desktop{display:none!important}
+      .nav-hamburger{display:flex!important}
+    }
   `}</style>
 );
 
@@ -253,34 +265,141 @@ function Marquee() {
 // ─── Nav ───────────────────────────────────────────────────────────────────
 function Nav({ profile, onAdmin }) {
   const [scrolled, setScrolled] = useState(false);
-  useEffect(() => { const h=()=>setScrolled(window.scrollY>60); window.addEventListener('scroll',h); return ()=>window.removeEventListener('scroll',h); },[]);
-  const links=[['work','Work'],['about','About'],['services','Services'],['contact','Contact']];
-  const name=profile.name.split(' ');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', h);
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
+
+  const closeSidebar = () => {
+    setClosing(true);
+    setTimeout(() => { setSidebarOpen(false); setClosing(false); }, 360);
+  };
+
+  const links = [['work','Work'],['about','About'],['services','Services'],['contact','Contact']];
+  const name = profile.name.split(' ');
+
   return (
-    <nav style={{
-      position:'fixed',top:0,left:0,right:0,zIndex:100,height:64,
-      padding:'0 clamp(20px,4vw,48px)',display:'flex',alignItems:'center',justifyContent:'space-between',
-      background:scrolled?'rgba(8,8,8,0.97)':'transparent',
-      backdropFilter:scrolled?'blur(20px)':'none',
-      borderBottom:scrolled?`1px solid ${C.border}`:'none',
-      transition:'all 0.4s cubic-bezier(0.16,1,0.3,1)',
-    }}>
-      <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} style={{background:'none',border:'none',transition:'opacity 0.2s'}}
-        onMouseEnter={e=>e.currentTarget.style.opacity='0.65'}
-        onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-        <span className="dp" style={{fontSize:22,color:C.text,letterSpacing:'0.05em'}}>
-          {name[0]}<span style={{color:C.accent}}>{name[1]?`.${name[1]}`:''}</span>
-        </span>
-      </button>
-      <div style={{display:'flex',gap:'clamp(16px,3vw,36px)',alignItems:'center'}}>
-        {links.map(([id,label])=>(
-          <a key={id} href={`#${id}`} className="nav-link" style={{color:C.textMuted,textDecoration:'none',fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',fontFamily:'DM Sans',transition:'color 0.2s'}}
-            onMouseEnter={e=>e.currentTarget.style.color=C.text}
-            onMouseLeave={e=>e.currentTarget.style.color=C.textMuted}>{label}</a>
-        ))}
-        <a href="#contact" className="hire-btn" style={{background:C.accent,color:'#000',padding:'8px 22px',borderRadius:4,textDecoration:'none',fontWeight:500,fontSize:12,letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans'}}>Hire Me</a>
-      </div>
-    </nav>
+    <>
+      <nav style={{
+        position:'fixed',top:0,left:0,right:0,zIndex:100,height:64,
+        padding:'0 clamp(20px,4vw,48px)',display:'flex',alignItems:'center',justifyContent:'space-between',
+        background:scrolled?'rgba(8,8,8,0.97)':'rgba(8,8,8,0.4)',
+        backdropFilter:'blur(20px)',
+        borderBottom:scrolled?`1px solid ${C.border}`:'none',
+        transition:'all 0.4s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} style={{background:'none',border:'none',transition:'opacity 0.2s'}}
+          onMouseEnter={e=>e.currentTarget.style.opacity='0.65'}
+          onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+          <span className="dp" style={{fontSize:22,color:C.text,letterSpacing:'0.05em'}}>
+            {name[0]}<span style={{color:C.accent}}>{name[1]?`.${name[1]}`:''}</span>
+          </span>
+        </button>
+
+        <div className="nav-desktop">
+          {links.map(([id,label])=>(
+            <a key={id} href={`#${id}`} className="nav-link" style={{color:C.textMuted,textDecoration:'none',fontSize:12,letterSpacing:'0.12em',textTransform:'uppercase',fontFamily:'DM Sans',transition:'color 0.2s'}}
+              onMouseEnter={e=>e.currentTarget.style.color=C.text}
+              onMouseLeave={e=>e.currentTarget.style.color=C.textMuted}>{label}</a>
+          ))}
+          <a href="#contact" className="hire-btn" style={{background:C.accent,color:'#000',padding:'8px 22px',borderRadius:4,textDecoration:'none',fontWeight:500,fontSize:12,letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'DM Sans'}}>Hire Me</a>
+        </div>
+
+        <button
+          className={`nav-hamburger${sidebarOpen?' open':''}`}
+          onClick={()=> sidebarOpen ? closeSidebar() : setSidebarOpen(true)}
+          aria-label="Toggle menu">
+          <span/><span/><span/>
+        </button>
+      </nav>
+
+      {sidebarOpen && (
+        <div onClick={closeSidebar} style={{
+          position:'fixed',inset:0,zIndex:150,
+          background:'rgba(0,0,0,0.7)',
+          backdropFilter:'blur(4px)',
+          animation:'fadeIn 0.3s ease both',
+        }}/>
+      )}
+
+      {sidebarOpen && (
+        <div style={{
+          position:'fixed',top:0,right:0,bottom:0,zIndex:151,
+          width:'min(300px,82vw)',
+          background:C.surface,
+          borderLeft:`1px solid ${C.border}`,
+          display:'flex',flexDirection:'column',
+          animation: closing
+            ? 'sidebarOut 0.36s cubic-bezier(0.16,1,0.3,1) both'
+            : 'sidebarIn 0.38s cubic-bezier(0.16,1,0.3,1) both',
+          boxShadow:'-24px 0 80px rgba(0,0,0,0.7)',
+        }}>
+          <div style={{height:64,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
+            <span className="dp" style={{fontSize:20,color:C.text,letterSpacing:'0.05em'}}>
+              {name[0]}<span style={{color:C.accent}}>{name[1]?`.${name[1]}`:''}</span>
+            </span>
+            <button onClick={closeSidebar} style={{
+              background:'none',border:`1px solid ${C.border}`,color:C.textMuted,
+              width:34,height:34,borderRadius:'50%',fontSize:18,
+              display:'flex',alignItems:'center',justifyContent:'center',
+              transition:'all 0.25s',
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textMuted;}}
+            >×</button>
+          </div>
+
+          <div style={{flex:1,display:'flex',flexDirection:'column',padding:'24px',overflowY:'auto'}}>
+            {links.map(([id,label],i)=>(
+              <a key={id} href={`#${id}`} onClick={closeSidebar}
+                style={{
+                  display:'flex',alignItems:'center',gap:14,
+                  padding:'16px 0',
+                  color:C.textMuted,textDecoration:'none',
+                  fontSize:13,letterSpacing:'0.14em',textTransform:'uppercase',
+                  fontFamily:'DM Sans',
+                  borderBottom:`1px solid ${C.border}`,
+                  transition:'color 0.2s, padding-left 0.25s',
+                  animation:`fadeUp 0.4s ${i*0.07}s ease both`,
+                }}
+                onMouseEnter={e=>{e.currentTarget.style.color=C.text;e.currentTarget.style.paddingLeft='8px';}}
+                onMouseLeave={e=>{e.currentTarget.style.color=C.textMuted;e.currentTarget.style.paddingLeft='0';}}>
+                <span style={{color:C.accent,fontFamily:'DM Sans',fontSize:10,minWidth:20,letterSpacing:'0.08em'}}>0{i+1}</span>
+                {label}
+              </a>
+            ))}
+          </div>
+
+          <div style={{padding:'24px',borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+            <a href="#contact" onClick={closeSidebar}
+              style={{
+                display:'block',textAlign:'center',
+                background:C.accent,color:'#000',
+                padding:'14px 0',borderRadius:4,
+                textDecoration:'none',fontWeight:500,
+                fontSize:12,letterSpacing:'0.1em',textTransform:'uppercase',
+                fontFamily:'DM Sans',transition:'opacity 0.2s',
+              }}
+              onMouseEnter={e=>e.currentTarget.style.opacity='0.85'}
+              onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+              Hire Me
+            </a>
+            <p style={{textAlign:'center',marginTop:14,fontSize:11,color:C.textDim,fontFamily:'DM Sans',letterSpacing:'0.05em'}}>
+              {profile.email}
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
