@@ -311,9 +311,9 @@ function Hero({ profile }) {
             <span style={{color:C.accent,fontSize:11,letterSpacing:'0.12em',textTransform:'uppercase',fontFamily:'DM Sans'}}>Available for new projects</span>
           </div>
         )}
-        <h1 className="dp" style={{fontSize:'clamp(64px,11.5vw,152px)',lineHeight:0.88,color:C.text,marginBottom:36}}>
+        <h1 className="dp" style={{fontSize:'clamp(64px,11.5vw,152px)',lineHeight:1,color:C.text,marginBottom:36}}>
           {lines.map((line,i)=>(
-            <div key={i} style={{overflow:'hidden',height:'1.05em',animation:`fadeUp 0.7s ${0.3+i*0.18}s cubic-bezier(0.16,1,0.3,1) both`}}>
+            <div key={i} style={{overflow:'hidden',paddingBottom:'0.12em',marginBottom:'-0.12em',animation:`fadeUp 0.7s ${0.3+i*0.18}s cubic-bezier(0.16,1,0.3,1) both`}}>
               <span style={{display:'block',color:i===1?C.accent:C.text,textShadow:i===1?`0 0 40px rgba(245,166,35,0.22)`:'none'}}>{line}</span>
             </div>
           ))}
@@ -568,7 +568,7 @@ function PasswordGate({ open, onClose, onSuccess }) {
             onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
             onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>Unlock</button>
         </div>
-        <p style={{textAlign:'center',marginTop:18,fontSize:11,color:C.textDim,fontFamily:'DM Sans'}}>Default: <span style={{color:C.accent}}>editor2024</span></p>
+
       </div>
     </div>
   );
