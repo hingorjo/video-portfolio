@@ -12,18 +12,38 @@ const db = {
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+const extractYouTubeId = url => {
+  if (!url) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?.*v=)([^&\s?#]+)/,
+    /(?:youtu\.be\/)([^&\s?#]+)/,
+    /(?:youtube\.com\/embed\/)([^&\s?#]+)/,
+    /(?:youtube\.com\/shorts\/)([^&\s?#]+)/,
+    /(?:youtube\.com\/v\/)([^&\s?#]+)/,
+  ];
+  for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+  return null;
+};
+const extractVimeoId = url => {
+  if (!url) return null;
+  const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  return m ? m[1] : null;
+};
 const getEmbedUrl = url => {
   if (!url) return '';
-  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
-  const vi = url.match(/vimeo\.com\/(\d+)/);
-  if (vi) return `https://player.vimeo.com/video/${vi[1]}`;
+  const ytId = extractYouTubeId(url);
+  if (ytId) return `https://www.youtube.com/embed/${ytId}`;
+  const viId = extractVimeoId(url);
+  if (viId) return `https://player.vimeo.com/video/${viId}`;
+  const gdrive = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (gdrive) return `https://drive.google.com/file/d/${gdrive[1]}/preview`;
+  if (url.match(/\.(mp4|webm|mov)$/i)) return '__direct__';
   return url;
 };
 const getThumb = url => {
   if (!url) return null;
-  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?]+)/);
-  return yt ? `https://img.youtube.com/vi/${yt[1]}/maxresdefault.jpg` : null;
+  const ytId = extractYouTubeId(url);
+  return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null;
 };
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
@@ -463,12 +483,45 @@ function Hero({ profile }) {
 
 // ─── Video Card ────────────────────────────────────────────────────────────
 function VideoCard({ project, onPlay, delay=0 }) {
-  const thumb = getThumb(project.videoUrl);
+  const autoThumb = getThumb(project.videoUrl);
+  const thumb = project.thumbnailUrl || autoThumb;
+  const [imgErr, setImgErr] = useState(false);
+  const [tryHq, setTryHq] = useState(false);
+  const [vimeoThumb, setVimeoThumb] = useState(null);
+
+  // Fetch Vimeo thumbnail via oEmbed if no custom thumb and it's a Vimeo URL
+  useEffect(() => {
+    if (thumb || project.thumbnailUrl) return;
+    const viId = extractVimeoId(project.videoUrl);
+    if (!viId) return;
+    fetch(`https://vimeo.com/api/oembed.json?url=https://vimeo.com/${viId}`)
+      .then(r => r.json())
+      .then(d => { if (d.thumbnail_url) setVimeoThumb(d.thumbnail_url.replace(/_\d+x\d+/, '_640x360')); })
+      .catch(() => {});
+  }, [project.videoUrl, thumb]);
+
+  const finalThumb = imgErr ? null : (thumb || vimeoThumb);
+  const ytId = extractYouTubeId(project.videoUrl);
+
+  const handleImgError = () => {
+    // If maxresdefault failed, try hqdefault
+    if (ytId && !tryHq && !project.thumbnailUrl) {
+      setTryHq(true);
+    } else {
+      setImgErr(true);
+    }
+  };
+
+  const imgSrc = tryHq && ytId && !project.thumbnailUrl
+    ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+    : finalThumb;
+
   return (
-    <div className="vc reveal" style={{transitionDelay:`${delay}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden'}} onClick={()=>onPlay(project)}>
+    <div className="vc reveal" style={{transitionDelay:`${delay}s`,background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,overflow:'hidden',cursor:'pointer'}} onClick={()=>onPlay(project)}>
       <div style={{position:'relative',paddingBottom:'56.25%',background:C.surface2,overflow:'hidden'}}>
-        {thumb ? (
-          <img className="vthumb" src={thumb} alt={project.title} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',transition:'transform 0.6s cubic-bezier(0.16,1,0.3,1)'}}/>
+        {imgSrc && !imgErr ? (
+          <img className="vthumb" src={imgSrc} alt={project.title} onError={handleImgError}
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',transition:'transform 0.6s cubic-bezier(0.16,1,0.3,1)'}}/>
         ):(
           <div style={{position:'absolute',inset:0,background:`linear-gradient(135deg,${C.surface2},${C.surface3})`,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:10}}>
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="1" y="1" width="38" height="38" rx="5" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/><polygon points="14,10 30,20 14,30" fill="rgba(255,255,255,0.12)"/></svg>
@@ -492,9 +545,12 @@ function VideoCard({ project, onPlay, delay=0 }) {
 
 // ─── Video Modal ───────────────────────────────────────────────────────────
 function VideoModal({ project, onClose }) {
-  useEffect(()=>{ document.body.style.overflow=project?'hidden':''; },[project]);
+  useEffect(()=>{ document.body.style.overflow=project?'hidden':''; return ()=>{document.body.style.overflow='';}; },[project]);
   if (!project) return null;
   const embed = getEmbedUrl(project.videoUrl);
+  const isDirectVideo = embed === '__direct__';
+  const separator = embed.includes('?') ? '&' : '?';
+  const embedSrc = embed && !isDirectVideo ? `${embed}${separator}autoplay=1&rel=0` : '';
   return (
     <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,0.95)',display:'flex',alignItems:'center',justifyContent:'center',padding:24,animation:'fadeIn 0.3s ease'}}>
       <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:920,animation:'scaleIn 0.35s cubic-bezier(0.16,1,0.3,1)'}}>
@@ -507,9 +563,13 @@ function VideoModal({ project, onClose }) {
             onMouseEnter={e=>e.currentTarget.style.transform='rotate(90deg)'}
             onMouseLeave={e=>e.currentTarget.style.transform='rotate(0deg)'}>×</button>
         </div>
-        {embed ? (
+        {isDirectVideo ? (
           <div style={{position:'relative',paddingBottom:'56.25%',background:'#000',borderRadius:10,overflow:'hidden',boxShadow:'0 32px 80px rgba(0,0,0,0.8)'}}>
-            <iframe src={embed+'?autoplay=1&rel=0'} style={{position:'absolute',inset:0,width:'100%',height:'100%',border:'none'}} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/>
+            <video src={project.videoUrl} controls autoPlay style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain'}} />
+          </div>
+        ) : embedSrc ? (
+          <div style={{position:'relative',paddingBottom:'56.25%',background:'#000',borderRadius:10,overflow:'hidden',boxShadow:'0 32px 80px rgba(0,0,0,0.8)'}}>
+            <iframe src={embedSrc} style={{position:'absolute',inset:0,width:'100%',height:'100%',border:'none'}} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen/>
           </div>
         ):(
           <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:64,textAlign:'center'}}>
@@ -720,11 +780,11 @@ function AdminPanel({ open, onClose, profile, projects, services, onSave }) {
   const [tab,setTab]=useState('projects');
   const [projs,setProjs]=useState(projects);
   const [srvs,setSrvs]=useState(services);
-  const [newProj,setNewProj]=useState({title:'',category:'Commercial',videoUrl:'',desc:''});
+  const [newProj,setNewProj]=useState({title:'',category:'Commercial',videoUrl:'',thumbnailUrl:'',desc:''});
   useEffect(()=>{ if(open){setProjs(projects);setSrvs(services);} },[open,projects,services]);
   if(!open) return null;
   const save=()=>{ onSave({profile,projects:projs,services:srvs}); onClose(); };
-  const addProj=()=>{ if(!newProj.title.trim())return; setProjs(prev=>[...prev,{...newProj,id:Date.now()}]); setNewProj({title:'',category:'Commercial',videoUrl:'',desc:''}); };
+  const addProj=()=>{ if(!newProj.title.trim())return; setProjs(prev=>[...prev,{...newProj,id:Date.now()}]); setNewProj({title:'',category:'Commercial',videoUrl:'',thumbnailUrl:'',desc:''}); };
   const delProj=id=>setProjs(prev=>prev.filter(x=>x.id!==id));
   const editProj=(id,k,v)=>setProjs(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
   const editSrv=(id,k,v)=>setSrvs(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
@@ -754,6 +814,7 @@ function AdminPanel({ open, onClose, profile, projects, services, onSave }) {
                   <input placeholder="Project Title *" value={newProj.title} onChange={e=>setNewProj({...newProj,title:e.target.value})}/>
                   <select value={newProj.category} onChange={e=>setNewProj({...newProj,category:e.target.value})}>{CATS.map(c=><option key={c}>{c}</option>)}</select>
                   <input placeholder="YouTube or Vimeo URL" value={newProj.videoUrl} onChange={e=>setNewProj({...newProj,videoUrl:e.target.value})}/>
+                  <input placeholder="Thumbnail Image URL (optional, auto for YouTube)" value={newProj.thumbnailUrl} onChange={e=>setNewProj({...newProj,thumbnailUrl:e.target.value})}/>
                   <input placeholder="Short description" value={newProj.desc} onChange={e=>setNewProj({...newProj,desc:e.target.value})}/>
                   <button onClick={addProj} style={{background:C.accent,color:'#000',border:'none',padding:'11px',borderRadius:6,fontFamily:'DM Sans',fontWeight:500,fontSize:13,transition:'opacity 0.2s'}}
                     onMouseEnter={e=>e.currentTarget.style.opacity='0.85'}
@@ -775,6 +836,7 @@ function AdminPanel({ open, onClose, profile, projects, services, onSave }) {
                     <input placeholder="Title" value={proj.title} onChange={e=>editProj(proj.id,'title',e.target.value)} style={{fontSize:13}}/>
                     <select value={proj.category} onChange={e=>editProj(proj.id,'category',e.target.value)}>{CATS.map(c=><option key={c}>{c}</option>)}</select>
                     <input placeholder="YouTube / Vimeo URL" value={proj.videoUrl} onChange={e=>editProj(proj.id,'videoUrl',e.target.value)} style={{fontSize:13}}/>
+                    <input placeholder="Thumbnail URL (optional)" value={proj.thumbnailUrl||''} onChange={e=>editProj(proj.id,'thumbnailUrl',e.target.value)} style={{fontSize:13}}/>
                     <input placeholder="Description" value={proj.desc} onChange={e=>editProj(proj.id,'desc',e.target.value)} style={{fontSize:13}}/>
                   </div>
                 </div>
